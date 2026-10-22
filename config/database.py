@@ -2,10 +2,10 @@ from collections.abc import Generator
 from sqlmodel import Session, SQLModel, create_engine
 from sqlalchemy.pool import NullPool
 
-from config.setting import setting
+from config.settings import settings
 
 # Retrieve the raw connection string from the SecretStr
-database_url = setting.DATABASE_URL.get_secret_value()
+database_url = settings.DATABASE_URL.get_secret_value()
 
 # For serverless deployment (Vercel) + Neon connection pooler:
 # NullPool disables client-side connection pooling, allowing Neon's PgBouncer
@@ -19,6 +19,8 @@ engine = create_engine(
 
 def init_db() -> None:
     """Create all database tables defined in SQLModel metadata."""
+    import src.models  # noqa: F401
+
     SQLModel.metadata.create_all(engine)
 
 
