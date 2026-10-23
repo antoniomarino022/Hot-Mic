@@ -9,7 +9,6 @@ from src.models.enums import (
     ModerationStatus,
     PostStyle,
     ShameBadge,
-    TriageCategory,
     pg_enum,
 )
 
@@ -42,7 +41,7 @@ class Confession(SQLModel, table=True):
         sa.CheckConstraint("reports_count >= 0", name="chk_confessions_reports_count"),
         sa.Index(
             "idx_public_feed",
-            sa.text("pinned_until DESC NULLS LAST"),
+            sa.text("pinned_until DESC"),
             sa.text("created_at DESC"),
             postgresql_where=sa.text("mod_status = 'approved' AND deleted_at IS NULL"),
         ),
@@ -59,14 +58,13 @@ class Confession(SQLModel, table=True):
         ),
     )
 
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
+    id: Optional[int] = Field(
+        default=None,
         primary_key=True,
-        sa_column_kwargs={"server_default": sa.text("gen_random_uuid()")},
     )
-    author_id: uuid.UUID = Field(
+    author_id: int = Field(
         sa_column=Column(
-            sa.Uuid,
+            sa.Integer,
             sa.ForeignKey("users.id", ondelete="CASCADE"),
             nullable=False,
         ),
@@ -86,14 +84,6 @@ class Confession(SQLModel, table=True):
             pg_enum(ModerationStatus, "moderation_status"),
             nullable=False,
             server_default=ModerationStatus.PENDING_AI.value,
-        ),
-    )
-    category: TriageCategory = Field(
-        default=TriageCategory.OK,
-        sa_column=Column(
-            pg_enum(TriageCategory, "triage_category"),
-            nullable=False,
-            server_default=TriageCategory.OK.value,
         ),
     )
     severity: int = Field(

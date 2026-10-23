@@ -29,8 +29,8 @@ class ReportCreateRequest(BaseModel):
 
 class ReportCreate(BaseModel):
     """Schema per la registrazione della segnalazione nel database."""
-    confession_id: uuid.UUID = Field(..., description="ID della confessione segnalata")
-    reporter_id: uuid.UUID = Field(..., description="ID dell'utente segnalatore")
+    confession_id: int = Field(..., description="ID della confessione segnalata")
+    reporter_id: int = Field(..., description="ID dell'utente segnalatore")
     reason: TriageCategory = Field(..., description="Motivo della segnalazione")
 
 
@@ -46,8 +46,9 @@ class ReportResponse(BaseModel):
     """Schema di risposta per una segnalazione."""
     model_config = ConfigDict(from_attributes=True)
 
-    confession_id: uuid.UUID
-    reporter_id: uuid.UUID
+    id: Optional[int] = None
+    confession_id: int
+    reporter_id: int
     reason: TriageCategory
     resolved: bool
     created_at: datetime

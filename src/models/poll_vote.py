@@ -14,20 +14,25 @@ if TYPE_CHECKING:
 
 class PollVote(SQLModel, table=True):
     __tablename__ = "poll_votes"
+    __table_args__ = (
+        sa.UniqueConstraint("confession_id", "user_id", name="uq_poll_votes_confession_user"),
+    )
 
-    confession_id: uuid.UUID = Field(
+    id: Optional[int] = Field(
+        default=None,
+        primary_key=True,
+    )
+    confession_id: int = Field(
         sa_column=Column(
-            sa.Uuid,
+            sa.Integer,
             sa.ForeignKey("confessions.id", ondelete="CASCADE"),
-            primary_key=True,
             nullable=False,
         ),
     )
-    user_id: uuid.UUID = Field(
+    user_id: int = Field(
         sa_column=Column(
-            sa.Uuid,
+            sa.Integer,
             sa.ForeignKey("users.id", ondelete="CASCADE"),
-            primary_key=True,
             nullable=False,
         ),
     )

@@ -17,8 +17,8 @@ class PollVoteCreateRequest(BaseModel):
 
 class PollVoteCreate(BaseModel):
     """Schema per la persistenza del voto a database."""
-    confession_id: uuid.UUID = Field(..., description="ID della confessione con sondaggio")
-    user_id: uuid.UUID = Field(..., description="ID dell'utente votante")
+    confession_id: int = Field(..., description="ID della confessione con sondaggio")
+    user_id: int = Field(..., description="ID dell'utente votante")
     choice: PollChoice = Field(..., description="Scelta effettuata ('a' o 'b')")
 
 
@@ -26,8 +26,9 @@ class PollVoteResponse(BaseModel):
     """Risposta contenente i risultati percentuali aggiornati per il widget sondaggio."""
     model_config = ConfigDict(from_attributes=True)
 
-    confession_id: uuid.UUID
-    user_id: uuid.UUID
+    id: Optional[int] = None
+    confession_id: int
+    user_id: int
     choice: PollChoice
     created_at: datetime
 

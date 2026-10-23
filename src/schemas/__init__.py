@@ -8,7 +8,6 @@ from src.schemas.confession import (
     ConfessionAIUpdate,
     ConfessionBoostRequest,
     ConfessionCreate,
-    ConfessionCreateRequest,
     ConfessionFilterRequest,
     ConfessionResponse,
 )
@@ -30,6 +29,7 @@ from src.schemas.report import (
 )
 from src.schemas.user import (
     TelegramAuthRequest,
+    TelegramWidgetAuthRequest,
     UserCreate,
     UserResponse,
     UserStatusUpdateRequest,
@@ -39,12 +39,12 @@ from src.schemas.user import (
 __all__ = [
     # User
     "TelegramAuthRequest",
+    "TelegramWidgetAuthRequest",
     "UserTermsAcceptRequest",
     "UserCreate",
     "UserStatusUpdateRequest",
     "UserResponse",
     # Confession
-    "ConfessionCreateRequest",
     "ConfessionCreate",
     "ConfessionAIUpdate",
     "ConfessionBoostRequest",

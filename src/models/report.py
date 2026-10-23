@@ -20,21 +20,24 @@ class Report(SQLModel, table=True):
             "confession_id",
             postgresql_where=sa.text("resolved = false"),
         ),
+        sa.UniqueConstraint("confession_id", "reporter_id", name="uq_reports_confession_reporter"),
     )
 
-    confession_id: uuid.UUID = Field(
+    id: Optional[int] = Field(
+        default=None,
+        primary_key=True,
+    )
+    confession_id: int = Field(
         sa_column=Column(
-            sa.Uuid,
+            sa.Integer,
             sa.ForeignKey("confessions.id", ondelete="CASCADE"),
-            primary_key=True,
             nullable=False,
         ),
     )
-    reporter_id: uuid.UUID = Field(
+    reporter_id: int = Field(
         sa_column=Column(
-            sa.Uuid,
+            sa.Integer,
             sa.ForeignKey("users.id", ondelete="CASCADE"),
-            primary_key=True,
             nullable=False,
         ),
     )

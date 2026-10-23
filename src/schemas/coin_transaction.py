@@ -28,7 +28,7 @@ class CoinSpendRequest(BaseModel):
         ...,
         description="Tipologia di spesa (buy_highlight, buy_pin_boost, buy_ai_lawyer, buy_ai_prosecutor, buy_shame_stamp)",
     )
-    target_confession_id: Optional[uuid.UUID] = Field(
+    target_confession_id: Optional[int] = Field(
         default=None,
         description="ID della confessione target per il potenziamento o sabotaggio",
     )
@@ -50,13 +50,13 @@ class CoinSpendRequest(BaseModel):
 
 class CoinTransactionCreate(BaseModel):
     """Schema per la persistenza di una transazione economica nel database."""
-    user_id: uuid.UUID = Field(..., description="ID dell'utente associato")
+    user_id: int = Field(..., description="ID dell'utente associato")
     amount: int = Field(..., description="Variazione monete (positivo = accredito, negativo = addebito)")
     balance_after: int = Field(..., ge=0, description="Saldo risultante dell'utente (deve essere >= 0)")
     tx_type: TxType = Field(..., description="Tipo di transazione")
     stars_paid: Optional[int] = Field(default=None, gt=0, description="Telegram Stars pagate (se applicabile)")
     telegram_charge_id: Optional[str] = Field(default=None, max_length=255, description="ID carica Telegram")
-    target_confession_id: Optional[uuid.UUID] = Field(default=None, description="Confessione collegata (se applicabile)")
+    target_confession_id: Optional[int] = Field(default=None, description="Confessione collegata (se applicabile)")
 
     @field_validator("amount")
     @classmethod
@@ -70,12 +70,12 @@ class CoinTransactionResponse(BaseModel):
     """Schema di risposta per una transazione monetaria."""
     model_config = ConfigDict(from_attributes=True)
 
-    id: uuid.UUID
-    user_id: uuid.UUID
+    id: int
+    user_id: int
     amount: int
     balance_after: int
     tx_type: TxType
     stars_paid: Optional[int] = None
     telegram_charge_id: Optional[str] = None
-    target_confession_id: Optional[uuid.UUID] = None
+    target_confession_id: Optional[int] = None
     created_at: datetime

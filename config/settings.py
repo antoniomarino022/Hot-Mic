@@ -4,39 +4,43 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    """Configurazione dell'applicazione caricata da variabili d'ambiente o file .env.
-    
-    I campi sensibili utilizzano `SecretStr` per prevenire leak accidentali
-    in log, eccezioni o risposte API. Per accedere al valore stringa grezzo:
+    """Application configuration loaded from environment variables or .env file.
+
+    Sensitive fields use `SecretStr` to prevent accidental exposure
+    in logs, tracebacks, or API responses. To retrieve the raw string value:
     `settings.DEEPSEEK_API_KEY.get_secret_value()`
     """
 
-    # --- Credenziali e Chiavi Sensibili (SecretStr) ---
     DEEPSEEK_API_KEY: SecretStr = Field(
-        ...,
-        description="Chiave API DeepSeek per la pipeline di triage e roast",
+        default=SecretStr(""),
+        description="DeepSeek API key used for safety triage and roast generation",
     )
     HMAC_SECRET_KEY: SecretStr = Field(
-        ...,
-        description="Chiave segreta per la derivazione HMAC-SHA256 delle user_key",
+        default=SecretStr(""),
+        description="Secret key for pseudonymous user_key derivation via HMAC-SHA256",
     )
     TELEGRAM_BOT_TOKEN: SecretStr = Field(
-        ...,
-        description="Token del bot Telegram rilasciato da BotFather",
+        default=SecretStr(""),
+        description="Telegram bot token issued by BotFather",
     )
+
     REDIS_URL: SecretStr = Field(
         default=SecretStr("redis://localhost:6379/0"),
-        description="URL di connessione Redis / Upstash (SecretStr per proteggere credenziali inline)",
+        description="Redis / Upstash connection URL (SecretStr to protect inline credentials)",
     )
     DATABASE_URL: SecretStr = Field(
         default=SecretStr(""),
-        description="Stringa di connessione Neon PostgreSQL (pooled)",
+        description="Neon PostgreSQL pooled connection string",
     )
 
-    # --- Configurazioni Pubbliche / Non Segrete ---
+
+    TELEGRAM_BOT_USERNAME: str = Field(
+        default="HotMicBot",
+        description="Telegram bot username (without @) for the Web Login Widget",
+    )
     TELEGRAM_WEBHOOK_URL: str = Field(
         default="",
-        description="URL pubblico per il webhook di Telegram su Vercel",
+        description="Public URL endpoint for Telegram webhook on Vercel",
     )
 
     model_config = SettingsConfigDict(
@@ -49,9 +53,10 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    """Restituisce un'istanza singleton di Settings con cache LRU."""
+    """Returns a cached singleton instance of Settings."""
     return Settings()
 
 
-# Istanza globale accessibile nel progetto
+# Global instance accessible throughout the project
 settings = get_settings()
+

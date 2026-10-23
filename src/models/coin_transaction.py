@@ -30,14 +30,13 @@ class CoinTransaction(SQLModel, table=True):
         ),
     )
 
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
+    id: Optional[int] = Field(
+        default=None,
         primary_key=True,
-        sa_column_kwargs={"server_default": sa.text("gen_random_uuid()")},
     )
-    user_id: uuid.UUID = Field(
+    user_id: int = Field(
         sa_column=Column(
-            sa.Uuid,
+            sa.Integer,
             sa.ForeignKey("users.id", ondelete="RESTRICT"),
             nullable=False,
         ),
@@ -66,10 +65,10 @@ class CoinTransaction(SQLModel, table=True):
     )
 
     # Post collegato (se applicabile)
-    target_confession_id: Optional[uuid.UUID] = Field(
+    target_confession_id: Optional[int] = Field(
         default=None,
         sa_column=Column(
-            sa.Uuid,
+            sa.Integer,
             sa.ForeignKey("confessions.id", ondelete="SET NULL"),
             nullable=True,
         ),

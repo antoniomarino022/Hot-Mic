@@ -47,6 +47,19 @@ class UserTermsAcceptRequest(BaseModel):
         return v
 
 
+class TelegramWidgetAuthRequest(BaseModel):
+    """Payload di autenticazione ricevuto dal Telegram Login Widget (Web)."""
+    id: int = Field(..., description="Telegram User ID")
+    first_name: Optional[str] = Field(default=None, description="Nome Telegram")
+    last_name: Optional[str] = Field(default=None, description="Cognome Telegram")
+    username: Optional[str] = Field(default=None, description="Username Telegram")
+    photo_url: Optional[str] = Field(default=None, description="Foto profilo Telegram")
+    auth_date: int = Field(..., description="Timestamp Unix di autorizzazione")
+    hash: str = Field(..., description="Firma crittografica HMAC-SHA256 calcolata da Telegram")
+    referral_code: Optional[str] = Field(default=None, min_length=6, max_length=16)
+    accepted: bool = Field(default=True, description="Conferma accettazione termini")
+
+
 class UserCreate(BaseModel):
     """Schema per la creazione interna di un nuovo utente nel database."""
     user_key: str = Field(
@@ -122,12 +135,12 @@ class UserResponse(BaseModel):
     """Schema di risposta pubblico per il profilo dell'utente."""
     model_config = ConfigDict(from_attributes=True)
 
-    id: uuid.UUID
+    id: int
     user_key: str
     status: UserStatus
     coins_balance: int
     referral_code: str
-    referred_by_id: Optional[uuid.UUID] = None
+    referred_by_id: Optional[int] = None
     referral_qualified_at: Optional[datetime] = None
     trust_score: int
     last_post_at: Optional[datetime] = None

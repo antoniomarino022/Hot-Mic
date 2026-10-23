@@ -26,10 +26,9 @@ class User(SQLModel, table=True):
         ),
     )
 
-    id: uuid.UUID = Field(
-        default_factory=uuid.uuid4,
+    id: Optional[int] = Field(
+        default=None,
         primary_key=True,
-        sa_column_kwargs={"server_default": sa.text("gen_random_uuid()")},
     )
     user_key: str = Field(
         sa_column=Column(sa.CHAR(64), unique=True, nullable=False),
@@ -60,10 +59,10 @@ class User(SQLModel, table=True):
     referral_code: str = Field(
         sa_column=Column(sa.String(16), unique=True, nullable=False),
     )
-    referred_by_id: Optional[uuid.UUID] = Field(
+    referred_by_id: Optional[int] = Field(
         default=None,
         sa_column=Column(
-            sa.Uuid,
+            sa.Integer,
             sa.ForeignKey("users.id", ondelete="SET NULL"),
             nullable=True,
         ),

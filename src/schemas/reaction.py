@@ -17,8 +17,8 @@ class ReactionCreateRequest(BaseModel):
 
 class ReactionCreate(BaseModel):
     """Schema per la persistenza a database di una reazione."""
-    confession_id: uuid.UUID = Field(..., description="ID della confessione target")
-    user_id: uuid.UUID = Field(..., description="ID dell'utente votante")
+    confession_id: int = Field(..., description="ID della confessione target")
+    user_id: int = Field(..., description="ID dell'utente votante")
     type: ReactionType = Field(..., description="Tipo di reazione")
 
 
@@ -26,8 +26,9 @@ class ReactionResponse(BaseModel):
     """Risposta con lo stato della reazione e i contatori aggiornati."""
     model_config = ConfigDict(from_attributes=True)
 
-    confession_id: uuid.UUID
-    user_id: uuid.UUID
+    id: Optional[int] = None
+    confession_id: int
+    user_id: int
     type: ReactionType
     created_at: datetime
 

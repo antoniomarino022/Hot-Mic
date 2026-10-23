@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hot-Mic 🎙️ | Nuova Confessione</title>
+
+    <!-- Telegram Web App SDK -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Telegram UI CSS Library -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@telegram-apps/telegram-ui@latest/dist/styles.css">
+
+    <!-- Tailwind CSS -->
+    <link rel="stylesheet" href="/static/css/output.css">
+
+    <style>
+        :root {
+            --tg-theme-bg-color: #0e1621;
+            --tg-theme-secondary-bg-color: #17212b;
+            --tg-theme-text-color: #ffffff;
+            --tg-theme-hint-color: #7f91a4;
+            --tg-theme-link-color: #5288c1;
+            --tg-theme-button-color: #2b72c9;
+            --tg-theme-button-text-color: #ffffff;
+        }
+
+        body {
+            background-color: var(--tg-theme-bg-color, #0e1621);
+            color: var(--tg-theme-text-color, #ffffff);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            min-height: 100vh;
+            margin: 0;
+            padding: 16px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tg-container {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .tg-card {
+            background-color: var(--tg-theme-secondary-bg-color, #17212b);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .tg-btn-primary {
+            background-color: var(--tg-theme-button-color, #2b72c9);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            font-weight: 600;
+            border-radius: 12px;
+            padding: 12px 20px;
+            width: 100%;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 15px;
+        }
+
+        .tg-btn-primary:hover {
+            opacity: 0.92;
+            transform: translateY(-1px);
+        }
+
+        .tg-btn-secondary {
+            background-color: rgba(255, 255, 255, 0.06);
+            color: var(--tg-theme-hint-color, #7f91a4);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            font-weight: 500;
+            border-radius: 12px;
+            padding: 8px 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 12px;
+        }
+
+        .tg-btn-secondary:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+        }
+
+        .tg-textarea {
+            background-color: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px;
+            color: #ffffff;
+            padding: 14px;
+            width: 100%;
+            outline: none;
+            resize: vertical;
+            min-height: 130px;
+            font-size: 14px;
+            line-height: 1.5;
+            transition: border-color 0.2s;
+        }
+
+        .tg-textarea:focus {
+            border-color: var(--tg-theme-button-color, #2b72c9);
+        }
+
+        .tg-input {
+            background-color: rgba(0, 0, 0, 0.25);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 12px;
+            color: #ffffff;
+            padding: 10px 12px;
+            width: 100%;
+            outline: none;
+            font-size: 13px;
+            transition: border-color 0.2s;
+        }
+
+        .tg-input:focus {
+            border-color: var(--tg-theme-button-color, #2b72c9);
+        }
+
+        .alert-box {
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 13px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tg-container">
+        <!-- Minimal Top Bar -->
+        <header class="flex items-center justify-between mb-5 px-1">
+            <div class="flex items-center gap-2">
+                <span class="text-2xl">🎙️</span>
+                <h1 class="text-lg font-bold text-white tracking-tight">Hot-Mic</h1>
+            </div>
+
+            <button onclick="handleLogout()" class="tg-btn-secondary text-red-400 hover:text-red-300">
+                Esci
+            </button>
+        </header>
+
+        <!-- Feedback Alert Box -->
+        <div id="alertBox" class="alert-box mb-4"></div>
+
+        <!-- Form Card -->
+        <div class="tg-card">
+            <form id="confessionForm" onsubmit="handleConfessionSubmit(event)" class="space-y-4">
+                <!-- Textarea -->
+                <div>
+                    <textarea 
+                        id="confessionContent" 
+                        class="tg-textarea" 
+                        placeholder="Scrivi qui la tua confessione anonima..." 
+                        maxlength="2000"
+                        oninput="updateCharCount()"
+                        required
+                    ></textarea>
+                    
+                    <div class="flex justify-end mt-1 text-[11px]" style="color: var(--tg-theme-hint-color);">
+                        <span id="charCount">0 / 2000</span>
+                    </div>
+                </div>
+
+                <!-- Optional Binary Poll -->
+                <div class="pt-2 border-t border-white/5">
+                    <button 
+                        type="button" 
+                        onclick="togglePollFields()" 
+                        class="text-xs font-medium py-1 flex items-center justify-between w-full" 
+                        style="color: var(--tg-theme-link-color);"
+                    >
+                        <span>Aggiungi un sondaggio (opzionale)</span>
+                        <span id="pollToggleIcon">▼</span>
+                    </button>
+
+                    <div id="pollFieldsContainer" class="hidden space-y-2 mt-2 pt-2">
+                        <input 
+                            type="text" 
+                            id="pollOptionA" 
+                            class="tg-input" 
+                            placeholder="Opzione A" 
+                            maxlength="80"
+                        />
+                        <input 
+                            type="text" 
+                            id="pollOptionB" 
+                            class="tg-input" 
+                            placeholder="Opzione B" 
+                            maxlength="80"
+                        />
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" id="submitBtn" class="tg-btn-primary">
+                    Pubblica Confessione
+                </button>
+            </form>
+        </div>
+
+        <!-- Result Card for Published Confession -->
+        <div id="latestConfessionSection" class="hidden tg-card border-green-500/30">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-green-400 font-semibold">Pubblicata</span>
+                <span id="latestConfessionIdBadge" class="text-[11px] text-gray-500 font-mono"></span>
+            </div>
+
+            <p id="latestConfessionText" class="text-sm text-gray-200 bg-black/20 p-3 rounded-xl border border-white/5 italic my-3 leading-relaxed"></p>
+
+            <div id="latestPollPreview" class="hidden text-xs space-y-1 bg-black/20 p-2 rounded-lg mb-3">
+                <div class="text-blue-300">A: <span id="latestPollA"></span></div>
+                <div class="text-purple-300">B: <span id="latestPollB"></span></div>
+            </div>
+
+            <div class="flex justify-end pt-2 border-t border-white/10">
+                <button 
+                    onclick="handleDeleteLatest()" 
+                    class="tg-btn-secondary text-red-400 hover:text-red-300"
+                >
+                    Elimina
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentConfessionId = null;
+
+        function updateCharCount() {
+            const textarea = document.getElementById('confessionContent');
+            const counter = document.getElementById('charCount');
+            if (textarea && counter) {
+                counter.innerText = `${textarea.value.length} / 2000`;
+            }
+        }
+
+        function togglePollFields() {
+            const container = document.getElementById('pollFieldsContainer');
+            const icon = document.getElementById('pollToggleIcon');
+            if (!container) return;
+
+            if (container.classList.contains('hidden')) {
+                container.classList.remove('hidden');
+                if (icon) icon.innerText = '▲';
+            } else {
+                container.classList.add('hidden');
+                if (icon) icon.innerText = '▼';
+            }
+        }
+
+        function showAlert(message, type = 'error') {
+            const box = document.getElementById('alertBox');
+            if (!box) return;
+            box.style.display = 'block';
+            if (type === 'error') {
+                box.className = 'alert-box mb-4 bg-red-500/20 text-red-300 border border-red-500/40';
+            } else {
+                box.className = 'alert-box mb-4 bg-green-500/20 text-green-300 border border-green-500/40';
+            }
+            box.innerText = message;
+        }
+
+        // Submit confession handler
+        async function handleConfessionSubmit(event) {
+            event.preventDefault();
+
+            const content = document.getElementById('confessionContent').value.trim();
+            if (content.length < 10) {
+                showAlert('La confessione deve contenere almeno 10 caratteri.', 'error');
+                return;
+            }
+
+            const pollOptionA = document.getElementById('pollOptionA')?.value.trim() || null;
+            const pollOptionB = document.getElementById('pollOptionB')?.value.trim() || null;
+
+            if ((pollOptionA && !pollOptionB) || (!pollOptionA && pollOptionB)) {
+                showAlert('Compila entrambe le opzioni del sondaggio o lasciale vuote.', 'error');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerText = 'Invio in corso...';
+            }
+
+            try {
+                const response = await fetch('/confessions/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        content: content,
+                        poll_option_a: pollOptionA,
+                        poll_option_b: pollOptionB
+                    })
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Errore durante la pubblicazione.');
+                }
+
+                showAlert('Confessione pubblicata con successo!', 'success');
+                currentConfessionId = data.id;
+
+                const section = document.getElementById('latestConfessionSection');
+                const textElem = document.getElementById('latestConfessionText');
+                const badgeElem = document.getElementById('latestConfessionIdBadge');
+                
+                if (section && textElem && badgeElem) {
+                    section.classList.remove('hidden');
+                    textElem.innerText = `"${data.content}"`;
+                    badgeElem.innerText = `#${data.id}`;
+
+                    const pollSection = document.getElementById('latestPollPreview');
+                    const pollAElem = document.getElementById('latestPollA');
+                    const pollBElem = document.getElementById('latestPollB');
+                    if (data.poll_option_a && data.poll_option_b && pollSection) {
+                        pollSection.classList.remove('hidden');
+                        if (pollAElem) pollAElem.innerText = data.poll_option_a;
+                        if (pollBElem) pollBElem.innerText = data.poll_option_b;
+                    } else if (pollSection) {
+                        pollSection.classList.add('hidden');
+                    }
+                }
+
+                document.getElementById('confessionContent').value = '';
+                if (document.getElementById('pollOptionA')) document.getElementById('pollOptionA').value = '';
+                if (document.getElementById('pollOptionB')) document.getElementById('pollOptionB').value = '';
+                updateCharCount();
+
+            } catch (err) {
+                showAlert(err.message, 'error');
+            } finally {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = 'Pubblica Confessione';
+                }
+            }
+        }
+
+        // Delete confession handler
+        async function handleDeleteLatest() {
+            if (!currentConfessionId) return;
+
+            if (!confirm('Eliminare questa confessione?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/confessions/${currentConfessionId}`, {
+                    method: 'DELETE'
+                });
+
+                const data = await response.json();
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Impossibile eliminare la confessione.');
+                }
+
+                showAlert('Confessione eliminata.', 'success');
+                const section = document.getElementById('latestConfessionSection');
+                if (section) section.classList.add('hidden');
+                currentConfessionId = null;
+
+            } catch (err) {
+                showAlert(err.message, 'error');
+            }
+        }
+
+        // Logout
+        async function handleLogout() {
+            try {
+                await fetch('/auth/logout', { method: 'POST' });
+                window.location.href = '/register';
+            } catch (err) {
+                showAlert('Errore durante il logout.', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
