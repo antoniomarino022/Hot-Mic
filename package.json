@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Hot-Mic anonymous confessions platform",
   "scripts": {
-    "build": "tailwindcss -i src/hot_mic/static/css/input.css -o src/hot_mic/static/css/output.css --minify",
-    "watch": "tailwindcss -i src/hot_mic/static/css/input.css -o src/hot_mic/static/css/output.css --watch"
+    "build": "tailwindcss -i src/static/src.css -o src/static/app.css --minify",
+    "watch": "tailwindcss -i src/static/src.css -o src/static/app.css --watch"
   },
   "keywords": [],
   "devDependencies": {

@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* 1. Token Telegram con fallback (browser di sviluppo / tema non fornito) */
+:root {
+  --c-bg:        var(--tg-theme-bg-color, #ffffff);
+  --c-secondary: var(--tg-theme-secondary-bg-color, #efeff4);
+  --c-section:   var(--tg-theme-section-bg-color, var(--c-bg));
+  --c-header:    var(--tg-theme-header-bg-color, var(--c-bg));
+  --c-text:      var(--tg-theme-text-color, #000000);
+  --c-hint:      var(--tg-theme-hint-color, #8e8e93);
+  --c-subtitle:  var(--tg-theme-subtitle-text-color, var(--c-hint));
+  --c-link:      var(--tg-theme-link-color, #2481cc);
+  --c-accent:    var(--tg-theme-button-color, #2481cc);
+  --c-on-accent: var(--tg-theme-button-text-color, #ffffff);
+  --c-accent-text: var(--tg-theme-accent-text-color, var(--c-link));
+  --c-danger:    var(--tg-theme-destructive-text-color, #e53935);
+  --c-sep:       color-mix(in srgb, var(--c-hint) 25%, transparent);
+  --c-press:     color-mix(in srgb, var(--c-hint) 14%, transparent);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-tg]) {  /* data-tg viene messo da tg.js quando siamo davvero dentro Telegram */
+    --c-bg: #212121; --c-secondary: #0f0f0f; --c-text: #fff; --c-hint: #aaaaaa;
+  }
+}
+
+/* 2. Esponi i token come utility Tailwind: bg-bg, bg-secondary, text-hint, ... */
+@theme inline {
+  --color-bg: var(--c-bg);
+  --color-secondary: var(--c-secondary);
+  --color-section: var(--c-section);
+  --color-header: var(--c-header);
+  --color-text: var(--c-text);
+  --color-hint: var(--c-hint);
+  --color-subtitle: var(--c-subtitle);
+  --color-link: var(--c-link);
+  --color-accent: var(--c-accent);
+  --color-on-accent: var(--c-on-accent);
+  --color-accent-text: var(--c-accent-text);
+  --color-danger: var(--c-danger);
+  --color-sep: var(--c-sep);
+  --color-press: var(--c-press);
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Text", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 3. Base */
+html, body { height: 100%; }
+body {
+  background: var(--c-secondary); color: var(--c-text);
+  font-family: var(--font-sans); font-size: 16px; line-height: 1.35;
+  -webkit-font-smoothing: antialiased; -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  padding-top: var(--tg-content-safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+button, a { touch-action: manipulation; }
+
+/* Utilità di stato e transizioni minime */
+.htmx-request {
+  opacity: 0.6;
+}

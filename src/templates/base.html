@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@telegram-apps/telegram-ui@latest/dist/styles.css">
+  <link rel="stylesheet" href="{{ url_for('static', path='app.css') }}">
+  <title>{% block title %}Hot-Mic{% endblock %}</title>
+  {% block head %}{% endblock %}
+</head>
+<body hx-boost="true" hx-target="#app" hx-swap="innerHTML" hx-push-url="false">
+  <main id="app" class="min-h-dvh flex flex-col">
+    {% block content %}{% endblock %}
+  </main>
+  <script src="{{ url_for('static', path='htmx.min.js') }}"></script>
+  <script src="{{ url_for('static', path='tg.js') }}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

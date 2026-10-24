@@ -1,389 +1,318 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Hot-Mic 🎙️ | Nuova Confessione</title>
+{% extends "base.html" %}
+{% import "macros/ui.html" as ui %}
 
-    <!-- Telegram Web App SDK -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+{% block title %}Hot-Mic — Nuova Confessione{% endblock %}
 
-    <!-- Telegram UI CSS Library -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@telegram-apps/telegram-ui@latest/dist/styles.css">
+{% block content %}
+<div class="flex-1 flex flex-col w-full max-w-lg mx-auto">
+  <!-- Sticky Header -->
+  <header class="sticky top-0 z-10 h-12 bg-header border-b border-sep flex items-center justify-between px-4">
+    <div class="flex items-center gap-2">
+      <span class="text-accent">{{ ui.icon("lock", cls="size-4") }}</span>
+      <span class="text-[17px] font-medium text-text">Hot-Mic</span>
+    </div>
+    <button 
+      type="button" 
+      onclick="handleLogout()" 
+      data-haptic 
+      class="text-xs text-danger active:opacity-60 py-1 px-2"
+    >
+      Esci
+    </button>
+  </header>
 
-    <!-- Tailwind CSS -->
-    <link rel="stylesheet" href="/static/css/output.css">
+  <!-- Content Container -->
+  <div class="flex-1 p-4 space-y-4">
+    <div id="confessionError" class="text-danger text-sm text-center hidden" role="alert"></div>
+    <div id="confessionSuccess" class="text-hint text-sm text-center hidden" role="status"></div>
 
-    <style>
-        :root {
-            --tg-theme-bg-color: #0e1621;
-            --tg-theme-secondary-bg-color: #17212b;
-            --tg-theme-text-color: #ffffff;
-            --tg-theme-hint-color: #7f91a4;
-            --tg-theme-link-color: #5288c1;
-            --tg-theme-button-color: #2b72c9;
-            --tg-theme-button-text-color: #ffffff;
-        }
+    <!-- Confession Form Section -->
+    <div class="bg-section rounded-2xl p-4 space-y-3">
+      <label for="confessionContent" class="block text-xs uppercase text-hint tracking-wider">
+        La tua confessione
+      </label>
 
-        body {
-            background-color: var(--tg-theme-bg-color, #0e1621);
-            color: var(--tg-theme-text-color, #ffffff);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            min-height: 100vh;
-            margin: 0;
-            padding: 16px;
-            display: flex;
-            justify-content: center;
-        }
+      <textarea 
+        id="confessionContent" 
+        rows="4"
+        maxlength="2000"
+        oninput="updateCharCount()"
+        placeholder="Scrivi qui la tua confessione anonima..." 
+        class="w-full bg-secondary text-text placeholder:text-hint text-base rounded-xl p-3 outline-none resize-none focus:ring-1 focus:ring-accent"
+        style="field-sizing: content; min-height: 7rem; max-height: 16rem;"
+        required
+      ></textarea>
 
-        .tg-container {
-            width: 100%;
-            max-width: 480px;
-        }
+      <div class="flex items-center justify-between text-xs text-hint pt-1">
+        <span class="flex items-center gap-1">
+          {{ ui.icon("lock", cls="size-3.5") }} Crittografata e anonima
+        </span>
+        <span id="charCount">0 / 2000</span>
+      </div>
 
-        .tg-card {
-            background-color: var(--tg-theme-secondary-bg-color, #17212b);
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 24px;
-            margin-bottom: 20px;
-        }
+      <!-- Optional Poll Section -->
+      <div class="pt-2 border-t border-sep">
+        <button 
+          type="button" 
+          onclick="togglePollFields()" 
+          data-haptic
+          class="w-full py-2 flex items-center justify-between text-sm text-link active:opacity-70"
+        >
+          <span>Aggiungi un sondaggio (opzionale)</span>
+          <span id="pollToggleIcon" class="text-hint transition-transform">
+            {{ ui.icon("chevron-down", cls="size-4") }}
+          </span>
+        </button>
 
-        .tg-btn-primary {
-            background-color: var(--tg-theme-button-color, #2b72c9);
-            color: var(--tg-theme-button-text-color, #ffffff);
-            font-weight: 600;
-            border-radius: 12px;
-            padding: 12px 20px;
-            width: 100%;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            font-size: 15px;
-        }
-
-        .tg-btn-primary:hover {
-            opacity: 0.92;
-            transform: translateY(-1px);
-        }
-
-        .tg-btn-secondary {
-            background-color: rgba(255, 255, 255, 0.06);
-            color: var(--tg-theme-hint-color, #7f91a4);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            font-weight: 500;
-            border-radius: 12px;
-            padding: 8px 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 12px;
-        }
-
-        .tg-btn-secondary:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: #ffffff;
-        }
-
-        .tg-textarea {
-            background-color: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 14px;
-            color: #ffffff;
-            padding: 14px;
-            width: 100%;
-            outline: none;
-            resize: vertical;
-            min-height: 130px;
-            font-size: 14px;
-            line-height: 1.5;
-            transition: border-color 0.2s;
-        }
-
-        .tg-textarea:focus {
-            border-color: var(--tg-theme-button-color, #2b72c9);
-        }
-
-        .tg-input {
-            background-color: rgba(0, 0, 0, 0.25);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 12px;
-            color: #ffffff;
-            padding: 10px 12px;
-            width: 100%;
-            outline: none;
-            font-size: 13px;
-            transition: border-color 0.2s;
-        }
-
-        .tg-input:focus {
-            border-color: var(--tg-theme-button-color, #2b72c9);
-        }
-
-        .alert-box {
-            border-radius: 12px;
-            padding: 12px;
-            font-size: 13px;
-            display: none;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="tg-container">
-        <!-- Minimal Top Bar -->
-        <header class="flex items-center justify-between mb-5 px-1">
-            <div class="flex items-center gap-2">
-                <span class="text-2xl">🎙️</span>
-                <h1 class="text-lg font-bold text-white tracking-tight">Hot-Mic</h1>
-            </div>
-
-            <button onclick="handleLogout()" class="tg-btn-secondary text-red-400 hover:text-red-300">
-                Esci
-            </button>
-        </header>
-
-        <!-- Feedback Alert Box -->
-        <div id="alertBox" class="alert-box mb-4"></div>
-
-        <!-- Form Card -->
-        <div class="tg-card">
-            <form id="confessionForm" onsubmit="handleConfessionSubmit(event)" class="space-y-4">
-                <!-- Textarea -->
-                <div>
-                    <textarea 
-                        id="confessionContent" 
-                        class="tg-textarea" 
-                        placeholder="Scrivi qui la tua confessione anonima..." 
-                        maxlength="2000"
-                        oninput="updateCharCount()"
-                        required
-                    ></textarea>
-                    
-                    <div class="flex justify-end mt-1 text-[11px]" style="color: var(--tg-theme-hint-color);">
-                        <span id="charCount">0 / 2000</span>
-                    </div>
-                </div>
-
-                <!-- Optional Binary Poll -->
-                <div class="pt-2 border-t border-white/5">
-                    <button 
-                        type="button" 
-                        onclick="togglePollFields()" 
-                        class="text-xs font-medium py-1 flex items-center justify-between w-full" 
-                        style="color: var(--tg-theme-link-color);"
-                    >
-                        <span>Aggiungi un sondaggio (opzionale)</span>
-                        <span id="pollToggleIcon">▼</span>
-                    </button>
-
-                    <div id="pollFieldsContainer" class="hidden space-y-2 mt-2 pt-2">
-                        <input 
-                            type="text" 
-                            id="pollOptionA" 
-                            class="tg-input" 
-                            placeholder="Opzione A" 
-                            maxlength="80"
-                        />
-                        <input 
-                            type="text" 
-                            id="pollOptionB" 
-                            class="tg-input" 
-                            placeholder="Opzione B" 
-                            maxlength="80"
-                        />
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <button type="submit" id="submitBtn" class="tg-btn-primary">
-                    Pubblica Confessione
-                </button>
-            </form>
+        <div id="pollFieldsContainer" class="hidden space-y-2 pt-2">
+          <input 
+            type="text" 
+            id="pollOptionA" 
+            maxlength="80"
+            placeholder="Opzione A (es. Avevo ragione)" 
+            class="w-full h-11 bg-secondary text-text placeholder:text-hint text-base rounded-xl px-3 outline-none focus:ring-1 focus:ring-accent"
+          />
+          <input 
+            type="text" 
+            id="pollOptionB" 
+            maxlength="80"
+            placeholder="Opzione B (es. Ho sbagliato)" 
+            class="w-full h-11 bg-secondary text-text placeholder:text-hint text-base rounded-xl px-3 outline-none focus:ring-1 focus:ring-accent"
+          />
         </div>
+      </div>
 
-        <!-- Result Card for Published Confession -->
-        <div id="latestConfessionSection" class="hidden tg-card border-green-500/30">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-xs text-green-400 font-semibold">Pubblicata</span>
-                <span id="latestConfessionIdBadge" class="text-[11px] text-gray-500 font-mono"></span>
-            </div>
-
-            <p id="latestConfessionText" class="text-sm text-gray-200 bg-black/20 p-3 rounded-xl border border-white/5 italic my-3 leading-relaxed"></p>
-
-            <div id="latestPollPreview" class="hidden text-xs space-y-1 bg-black/20 p-2 rounded-lg mb-3">
-                <div class="text-blue-300">A: <span id="latestPollA"></span></div>
-                <div class="text-purple-300">B: <span id="latestPollB"></span></div>
-            </div>
-
-            <div class="flex justify-end pt-2 border-t border-white/10">
-                <button 
-                    onclick="handleDeleteLatest()" 
-                    class="tg-btn-secondary text-red-400 hover:text-red-300"
-                >
-                    Elimina
-                </button>
-            </div>
-        </div>
+      <!-- Primary Action CTA -->
+      <div class="pt-2">
+        <button 
+          type="button" 
+          id="submitBtn" 
+          onclick="handleConfessionSubmit()" 
+          data-haptic
+          class="w-full h-11 rounded-xl bg-accent text-on-accent font-medium text-[15px] flex items-center justify-center gap-2 active:opacity-90 disabled:opacity-60"
+        >
+          {{ ui.icon("send", cls="size-4") }}
+          <span>Pubblica Confessione</span>
+        </button>
+      </div>
     </div>
 
-    <script>
-        let currentConfessionId = null;
+    <!-- Latest Published Confession (Result Card) -->
+    <div id="latestConfessionSection" class="hidden bg-section rounded-2xl p-4 space-y-3">
+      <div class="flex items-center justify-between text-xs text-hint">
+        <span class="font-medium text-accent-text">Pubblicata</span>
+        <span id="latestConfessionIdBadge" class="font-mono"></span>
+      </div>
 
-        function updateCharCount() {
-            const textarea = document.getElementById('confessionContent');
-            const counter = document.getElementById('charCount');
-            if (textarea && counter) {
-                counter.innerText = `${textarea.value.length} / 2000`;
-            }
+      <div class="bg-secondary rounded-xl p-3 text-text text-base whitespace-pre-wrap break-words" id="latestConfessionText"></div>
+
+      <div id="latestPollPreview" class="hidden space-y-1.5 pt-1 text-sm">
+        <div class="flex items-center justify-between p-2 rounded-lg bg-secondary text-text">
+          <span class="text-xs text-hint">A</span>
+          <span id="latestPollA" class="font-medium"></span>
+        </div>
+        <div class="flex items-center justify-between p-2 rounded-lg bg-secondary text-text">
+          <span class="text-xs text-hint">B</span>
+          <span id="latestPollB" class="font-medium"></span>
+        </div>
+      </div>
+
+      <div class="flex justify-end pt-2 border-t border-sep">
+        <button 
+          type="button" 
+          onclick="handleDeleteLatest()" 
+          data-haptic
+          class="text-xs text-danger active:opacity-70 flex items-center gap-1.5 py-1"
+        >
+          {{ ui.icon("trash", cls="size-4") }}
+          <span>Elimina confessione</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const tgApp = window.Telegram?.WebApp;
+  let currentConfessionId = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    // Se siamo su Telegram, configuriamo opzionalmente il MainButton
+    if (tgApp && tgApp.initData) {
+      tgApp.MainButton.setText("PUBBLICA CONFESSIONE");
+      tgApp.MainButton.onClick(handleConfessionSubmit);
+      // Mostra o nascondi MainButton in base al testo
+      syncMainButton();
+    }
+  });
+
+  function syncMainButton() {
+    if (!tgApp?.MainButton) return;
+    const content = document.getElementById('confessionContent')?.value.trim() || '';
+    if (content.length >= 10) {
+      tgApp.MainButton.show();
+      tgApp.MainButton.enable();
+    } else {
+      tgApp.MainButton.hide();
+    }
+  }
+
+  function updateCharCount() {
+    const textarea = document.getElementById('confessionContent');
+    const counter = document.getElementById('charCount');
+    if (textarea && counter) {
+      counter.textContent = `${textarea.value.length} / 2000`;
+    }
+    syncMainButton();
+  }
+
+  function togglePollFields() {
+    const container = document.getElementById('pollFieldsContainer');
+    const icon = document.getElementById('pollToggleIcon');
+    if (!container) return;
+
+    const isHidden = container.classList.toggle('hidden');
+    if (icon) {
+      icon.innerHTML = isHidden 
+        ? `{{ ui.icon("chevron-down", cls="size-4") }}` 
+        : `{{ ui.icon("chevron-up", cls="size-4") }}`;
+    }
+  }
+
+  function setFeedback(msg, isError = false) {
+    const errBox = document.getElementById('confessionError');
+    const succBox = document.getElementById('confessionSuccess');
+    if (errBox) {
+      if (isError && msg) {
+        errBox.textContent = msg;
+        errBox.classList.remove('hidden');
+      } else {
+        errBox.classList.add('hidden');
+      }
+    }
+    if (succBox) {
+      if (!isError && msg) {
+        succBox.textContent = msg;
+        succBox.classList.remove('hidden');
+      } else {
+        succBox.classList.add('hidden');
+      }
+    }
+  }
+
+  async function handleConfessionSubmit() {
+    setFeedback(null);
+    const content = document.getElementById('confessionContent').value.trim();
+    if (content.length < 10) {
+      setFeedback('La confessione deve contenere almeno 10 caratteri.', true);
+      tgApp?.HapticFeedback?.notificationOccurred("error");
+      return;
+    }
+
+    const pollOptionA = document.getElementById('pollOptionA')?.value.trim() || null;
+    const pollOptionB = document.getElementById('pollOptionB')?.value.trim() || null;
+
+    if ((pollOptionA && !pollOptionB) || (!pollOptionA && pollOptionB)) {
+      setFeedback('Compila entrambe le opzioni del sondaggio o lasciale vuote.', true);
+      tgApp?.HapticFeedback?.notificationOccurred("error");
+      return;
+    }
+
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) submitBtn.disabled = true;
+    if (tgApp?.MainButton) tgApp.MainButton.showProgress();
+
+    try {
+      const response = await fetch('/confessions/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          content: content,
+          poll_option_a: pollOptionA,
+          poll_option_b: pollOptionB
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Errore durante la pubblicazione.');
+      }
+
+      tgApp?.HapticFeedback?.notificationOccurred("success");
+      setFeedback('Confessione pubblicata con successo.');
+      currentConfessionId = data.id;
+
+      // Mostra anteprima confessione pubblicata
+      const section = document.getElementById('latestConfessionSection');
+      const textElem = document.getElementById('latestConfessionText');
+      const badgeElem = document.getElementById('latestConfessionIdBadge');
+      if (section && textElem && badgeElem) {
+        section.classList.remove('hidden');
+        textElem.textContent = data.content;
+        badgeElem.textContent = `#${data.id}`;
+
+        const pollSection = document.getElementById('latestPollPreview');
+        const pollAElem = document.getElementById('latestPollA');
+        const pollBElem = document.getElementById('latestPollB');
+        if (data.poll_option_a && data.poll_option_b && pollSection) {
+          pollSection.classList.remove('hidden');
+          if (pollAElem) pollAElem.textContent = data.poll_option_a;
+          if (pollBElem) pollBElem.textContent = data.poll_option_b;
+        } else if (pollSection) {
+          pollSection.classList.add('hidden');
         }
+      }
 
-        function togglePollFields() {
-            const container = document.getElementById('pollFieldsContainer');
-            const icon = document.getElementById('pollToggleIcon');
-            if (!container) return;
+      // Reset form
+      document.getElementById('confessionContent').value = '';
+      if (document.getElementById('pollOptionA')) document.getElementById('pollOptionA').value = '';
+      if (document.getElementById('pollOptionB')) document.getElementById('pollOptionB').value = '';
+      updateCharCount();
 
-            if (container.classList.contains('hidden')) {
-                container.classList.remove('hidden');
-                if (icon) icon.innerText = '▲';
-            } else {
-                container.classList.add('hidden');
-                if (icon) icon.innerText = '▼';
-            }
-        }
+    } catch (err) {
+      tgApp?.HapticFeedback?.notificationOccurred("error");
+      setFeedback(err.message, true);
+    } finally {
+      if (submitBtn) submitBtn.disabled = false;
+      if (tgApp?.MainButton) {
+        tgApp.MainButton.hideProgress();
+        syncMainButton();
+      }
+    }
+  }
 
-        function showAlert(message, type = 'error') {
-            const box = document.getElementById('alertBox');
-            if (!box) return;
-            box.style.display = 'block';
-            if (type === 'error') {
-                box.className = 'alert-box mb-4 bg-red-500/20 text-red-300 border border-red-500/40';
-            } else {
-                box.className = 'alert-box mb-4 bg-green-500/20 text-green-300 border border-green-500/40';
-            }
-            box.innerText = message;
-        }
+  async function handleDeleteLatest() {
+    if (!currentConfessionId) return;
 
-        // Submit confession handler
-        async function handleConfessionSubmit(event) {
-            event.preventDefault();
+    try {
+      const response = await fetch(`/confessions/${currentConfessionId}`, {
+        method: 'DELETE'
+      });
 
-            const content = document.getElementById('confessionContent').value.trim();
-            if (content.length < 10) {
-                showAlert('La confessione deve contenere almeno 10 caratteri.', 'error');
-                return;
-            }
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.detail || 'Impossibile eliminare la confessione.');
+      }
 
-            const pollOptionA = document.getElementById('pollOptionA')?.value.trim() || null;
-            const pollOptionB = document.getElementById('pollOptionB')?.value.trim() || null;
+      tgApp?.HapticFeedback?.notificationOccurred("success");
+      setFeedback('Confessione eliminata.');
+      document.getElementById('latestConfessionSection')?.classList.add('hidden');
+      currentConfessionId = null;
+    } catch (err) {
+      tgApp?.HapticFeedback?.notificationOccurred("error");
+      setFeedback(err.message, true);
+    }
+  }
 
-            if ((pollOptionA && !pollOptionB) || (!pollOptionA && pollOptionB)) {
-                showAlert('Compila entrambe le opzioni del sondaggio o lasciale vuote.', 'error');
-                return;
-            }
-
-            const submitBtn = document.getElementById('submitBtn');
-            if (submitBtn) {
-                submitBtn.disabled = true;
-                submitBtn.innerText = 'Invio in corso...';
-            }
-
-            try {
-                const response = await fetch('/confessions/', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        content: content,
-                        poll_option_a: pollOptionA,
-                        poll_option_b: pollOptionB
-                    })
-                });
-
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.detail || 'Errore durante la pubblicazione.');
-                }
-
-                showAlert('Confessione pubblicata con successo!', 'success');
-                currentConfessionId = data.id;
-
-                const section = document.getElementById('latestConfessionSection');
-                const textElem = document.getElementById('latestConfessionText');
-                const badgeElem = document.getElementById('latestConfessionIdBadge');
-                
-                if (section && textElem && badgeElem) {
-                    section.classList.remove('hidden');
-                    textElem.innerText = `"${data.content}"`;
-                    badgeElem.innerText = `#${data.id}`;
-
-                    const pollSection = document.getElementById('latestPollPreview');
-                    const pollAElem = document.getElementById('latestPollA');
-                    const pollBElem = document.getElementById('latestPollB');
-                    if (data.poll_option_a && data.poll_option_b && pollSection) {
-                        pollSection.classList.remove('hidden');
-                        if (pollAElem) pollAElem.innerText = data.poll_option_a;
-                        if (pollBElem) pollBElem.innerText = data.poll_option_b;
-                    } else if (pollSection) {
-                        pollSection.classList.add('hidden');
-                    }
-                }
-
-                document.getElementById('confessionContent').value = '';
-                if (document.getElementById('pollOptionA')) document.getElementById('pollOptionA').value = '';
-                if (document.getElementById('pollOptionB')) document.getElementById('pollOptionB').value = '';
-                updateCharCount();
-
-            } catch (err) {
-                showAlert(err.message, 'error');
-            } finally {
-                if (submitBtn) {
-                    submitBtn.disabled = false;
-                    submitBtn.innerText = 'Pubblica Confessione';
-                }
-            }
-        }
-
-        // Delete confession handler
-        async function handleDeleteLatest() {
-            if (!currentConfessionId) return;
-
-            if (!confirm('Eliminare questa confessione?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/confessions/${currentConfessionId}`, {
-                    method: 'DELETE'
-                });
-
-                const data = await response.json();
-                if (!response.ok) {
-                    throw new Error(data.detail || 'Impossibile eliminare la confessione.');
-                }
-
-                showAlert('Confessione eliminata.', 'success');
-                const section = document.getElementById('latestConfessionSection');
-                if (section) section.classList.add('hidden');
-                currentConfessionId = null;
-
-            } catch (err) {
-                showAlert(err.message, 'error');
-            }
-        }
-
-        // Logout
-        async function handleLogout() {
-            try {
-                await fetch('/auth/logout', { method: 'POST' });
-                window.location.href = '/register';
-            } catch (err) {
-                showAlert('Errore durante il logout.', 'error');
-            }
-        }
-    </script>
-</body>
-</html>
+  async function handleLogout() {
+    try {
+      await fetch('/auth/logout', { method: 'POST' });
+      window.location.href = '/register';
+    } catch (err) {
+      setFeedback('Errore durante il logout.', true);
+    }
+  }
+</script>
+{% endblock %}
